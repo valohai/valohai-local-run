@@ -1,14 +1,14 @@
 import datetime
 import json
 import os
+import subprocess
 import tempfile
 import time
 from itertools import chain
-import subprocess
 
-from .termui import echo, style, secho
 from .consts import volume_mount_targets
 from .inputs import prepare_inputs
+from .termui import echo, secho, style
 from .utils import ensure_makedirs, get_random_string
 
 
@@ -31,8 +31,8 @@ def build_env_params(env_vars):
 
 
 class LocalExecutor:
-    def __init__(self,
-        *,
+    def __init__(
+        self,
         project_id,
         directory,
         commit,

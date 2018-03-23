@@ -1,11 +1,10 @@
 import argparse
+import os
+from collections import defaultdict
+from io import StringIO
 from subprocess import check_output
 
-import os
 import valohai_yaml
-from io import StringIO
-
-from collections import defaultdict
 
 from valohai_local_run.consts import DEFAULT_OUTPUT_ROOT
 from valohai_local_run.executor import LocalExecutor
@@ -17,7 +16,7 @@ def get_argument_parser():
     ap = argparse.ArgumentParser()
     ap.add_argument('step')
     ap.add_argument('--commit', '-c', default=None, metavar='SHA',
-        help='The commit to use. Defaults to the current HEAD.')
+                    help='The commit to use. Defaults to the current HEAD.')
     ap.add_argument('--environment', '-e', default=None, help='Ignored.')
     ap.add_argument('--image', default=None, help='Override the Docker image specified in the step')
     ap.add_argument('--adhoc', '-a', action='store_true', help='Run as an ad-hoc execution')

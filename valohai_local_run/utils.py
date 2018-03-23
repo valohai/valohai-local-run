@@ -3,6 +3,8 @@ import random
 import re
 import string
 
+from valohai_local_run.compat import text_type
+
 
 def get_random_string(length=12, keyspace=(string.ascii_letters + string.digits)):
     return ''.join(random.choice(keyspace) for x in range(length))
@@ -22,5 +24,5 @@ def ensure_makedirs(path, mode=0o744):
 
 def match_prefix(choices, value):
     value_re = re.compile('^' + re.escape(value), re.I)
-    choices = [choice for choice in choices if value_re.match(str(choice))]
+    choices = [choice for choice in choices if value_re.match(text_type(choice))]
     return choices

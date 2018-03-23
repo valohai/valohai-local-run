@@ -2,10 +2,11 @@ import os
 import posixpath
 from stat import S_ISDIR, S_ISREG
 
-from .termui import echo, style
-from .download import download_url
-from .consts import volume_mount_targets
 from valohai_yaml.utils import listify
+
+from .consts import volume_mount_targets
+from .download import download_url
+from .termui import echo, style
 
 
 def prepare_inputs(input_dict, verbose=False):
@@ -30,7 +31,6 @@ def _prepare_single_input(input_name, filename, multiple_specs):
 
     if filename.startswith('http://') or filename.startswith('https://'):
         filename = download_url(filename, with_progress=True)
-
 
     fstat = os.stat(filename)
 

@@ -2,9 +2,10 @@
 Termui functions adapted from Click. Click is (c) 2014 by Armin Ronacher, licensed under the BSD license.
 """
 import re
-
 import sys
 from contextlib import contextmanager
+
+from valohai_local_run.compat import text_type
 
 try:
     import click
@@ -29,8 +30,10 @@ def isatty(stream):
         return False
 
 
-def style(text, fg=None, bg=None, bold=None, dim=None, underline=None,
-    blink=None, reverse=None, reset=True):
+def style(
+    text, fg=None, bg=None, bold=None, dim=None, underline=None,
+    blink=None, reverse=None, reset=True,
+):
     bits = []
     if fg:
         try:
@@ -70,7 +73,7 @@ def echo(message=None, file=None, nl=True, err=False, color=True):
     file = file or (sys.stderr if err else sys.stdout)
 
     if message is not None:
-        message = str(message)
+        message = text_type(message)
 
     if nl:
         message = message or u''

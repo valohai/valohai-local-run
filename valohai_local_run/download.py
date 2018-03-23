@@ -3,20 +3,10 @@ import os
 import tempfile
 
 from .termui import progressbar
-
 from .utils import ensure_makedirs
 
 
 def download_url(url, with_progress=True):
-    """
-    Download a file, caching it locally.
-
-    :param url: URL to download from
-    :return: Local filesystem path
-    """
-    # We want to ignore query strings when caching as
-    # inputs-to-download can be presigned AWS URLs,
-    # thus query strings changing every queued execution.
     cache_identifier = url
     if '?' in cache_identifier:
         cache_identifier = cache_identifier[:cache_identifier.index('?')]
@@ -36,7 +26,7 @@ def download_url(url, with_progress=True):
         except ModuleNotFoundError as err:
             raise RuntimeError(
                 'The `requests` module must be available for download support (attempting to download %s)' % url
-            ) from err
+            )
 
         r = requests.get(url, stream=True)
         r.raise_for_status()
