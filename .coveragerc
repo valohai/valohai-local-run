@@ -1,0 +1,5 @@
+[run]
+omit =
+	*.tox*
+	*site-packages*
+	setup.py
