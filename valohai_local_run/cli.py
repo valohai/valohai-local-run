@@ -7,6 +7,7 @@ from io import StringIO
 
 from collections import defaultdict
 
+from valohai_local_run.consts import DEFAULT_OUTPUT_ROOT
 from valohai_local_run.executor import LocalExecutor
 from valohai_local_run.termui import style
 from valohai_local_run.utils import match_prefix
@@ -22,7 +23,7 @@ def get_argument_parser():
     ap.add_argument('--adhoc', '-a', action='store_true', help='Run as an ad-hoc execution')
     ap.add_argument('--watch', '-w', action='store_true', help='Ignored. Local runs are always watched.')
     ap.add_argument('--project-id', '-p', default=None, help='Project ID.')
-    ap.add_argument('--output-root', default='./valohai-local-outputs/', help='Output root')
+    ap.add_argument('--output-root', default=DEFAULT_OUTPUT_ROOT, help='Output root')
     return ap
 
 

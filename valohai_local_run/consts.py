@@ -3,3 +3,4 @@ volume_mount_targets = {
     'inputs': '/valohai/inputs',
     'outputs': '/valohai/outputs',
 }
+DEFAULT_OUTPUT_ROOT = './valohai-local-outputs/'
