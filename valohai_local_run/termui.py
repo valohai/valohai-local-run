@@ -7,11 +7,6 @@ from contextlib import contextmanager
 
 from valohai_local_run.compat import text_type
 
-try:
-    import click
-except ModuleNotFoundError:
-    click = None
-
 _ansi_colors = (
     'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'reset',
 )
@@ -87,9 +82,10 @@ def echo(message=None, file=None, nl=True, err=False, color=True):
 
 
 def progressbar(object, **kwargs):
-    if click:
+    try:
+        import click
         return click.progressbar(object, **kwargs)
-    else:
+    except ImportError:
         @contextmanager
         def progressbar(object, *args, **kwargs):
             yield object

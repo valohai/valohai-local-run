@@ -23,7 +23,7 @@ def download_url(url, with_progress=True):
     if not os.path.isfile(cache_path):
         try:
             import requests
-        except ModuleNotFoundError as err:
+        except ImportError:
             raise RuntimeError(
                 'The `requests` module must be available for download support (attempting to download %s)' % url
             )
