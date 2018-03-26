@@ -6,9 +6,10 @@ import tempfile
 import time
 from itertools import chain
 
+from click import echo, secho, style
+
 from .consts import volume_mount_targets
 from .inputs import prepare_inputs
-from .termui import echo, secho, style
 from .utils import ensure_makedirs, get_random_string
 
 

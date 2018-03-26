@@ -3,7 +3,7 @@ import random
 import re
 import string
 
-from valohai_local_run.compat import text_type
+from .compat import text_type
 
 
 def get_random_string(length=12, keyspace=(string.ascii_letters + string.digits)):

@@ -5,11 +5,11 @@ from io import StringIO
 from subprocess import check_output
 
 import valohai_yaml
+from click import style
 
-from valohai_local_run.consts import DEFAULT_OUTPUT_ROOT
-from valohai_local_run.executor import LocalExecutor
-from valohai_local_run.termui import style
-from valohai_local_run.utils import match_prefix
+from .consts import DEFAULT_OUTPUT_ROOT
+from .executor import LocalExecutor
+from .utils import match_prefix
 
 
 def get_argument_parser():

@@ -2,11 +2,11 @@ import os
 import posixpath
 from stat import S_ISDIR, S_ISREG
 
+from click import echo, style
 from valohai_yaml.utils import listify
 
 from .consts import volume_mount_targets
 from .download import download_url
-from .termui import echo, style
 
 
 def prepare_inputs(input_dict, verbose=False):

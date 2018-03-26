@@ -2,7 +2,8 @@ import hashlib
 import os
 import tempfile
 
-from .termui import progressbar
+import click
+
 from .utils import ensure_makedirs
 
 
@@ -33,7 +34,7 @@ def download_url(url, with_progress=True):
         total = (int(r.headers['content-length']) if 'content-length' in r.headers else None)
         byte_iterator = r.iter_content(chunk_size=1048576)
 
-        progress = progressbar(byte_iterator, length=total, label=url, width=0)
+        progress = click.progressbar(byte_iterator, length=total, label=url, width=0)
         progress.is_hidden = (not with_progress)
 
         with open(cache_path, 'wb') as f, progress:
