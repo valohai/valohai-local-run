@@ -13,7 +13,7 @@ from .utils import match_prefix
 
 
 def get_argument_parser():
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(add_help=False)
     ap.add_argument('step')
     ap.add_argument('--commit', '-c', default=None, metavar='SHA',
                     help='The commit to use. Defaults to the current HEAD.')
@@ -25,18 +25,26 @@ def get_argument_parser():
     ap.add_argument('--output-root', default=DEFAULT_OUTPUT_ROOT, help='Output root')
     return ap
 
+parameter_type_map = {
+    'integer': int,
+    'float': float,
+}
 
 def add_step_arguments(ap, step):
+    param_group = ap.add_argument_group('parameters for "{}"'.format(step.name))
     for parameter in step.parameters.values():
-        ap.add_argument(
+        param_group.add_argument(
             '--%s' % parameter.name.replace('_', '-'),
             dest=':parameters:%s' % parameter.name,
             required=(parameter.default is None and not parameter.optional),
             default=parameter.default,
             help=parameter.description,
+            metavar=str(parameter.type or 'value').upper(),
+            type=parameter_type_map.get(parameter.type),
         )
+    input_group = ap.add_argument_group('inputs for "{}"'.format(step.name))
     for input in step.inputs.values():
-        ap.add_argument(
+        input_group.add_argument(
             '--%s' % input.name.replace('_', '-'),
             dest=':inputs:%s' % input.name,
             required=(input.default is None and not input.optional),
@@ -81,9 +89,16 @@ def cli(argv=None):
 
     config_data = check_output(['git', 'show', '{}:valohai.yaml'.format(args.commit)], cwd=directory).decode()
     config = valohai_yaml.parse(StringIO(config_data))
-    step = config.steps[match_step(config, args.step)]
+
+    try:
+        step = config.steps[match_step(config, args.step)]
+    except ValueError as ve:
+        ap.error(ve)
+        return
 
     add_step_arguments(ap, step)
+    # We add the help argument only here so the step's arguments are also listed
+    ap.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS, help='show this help message and exit')
 
     opt_args = ap.parse_args(argv)
     dicts = defaultdict(dict)
