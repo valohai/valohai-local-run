@@ -7,6 +7,7 @@ import time
 from itertools import chain
 
 from click import echo, secho, style
+from valohai_yaml.utils import listify
 
 from valohai_local_run.compat import text_type
 from .consts import volume_mount_targets
@@ -45,6 +46,7 @@ class LocalExecutor:
         command=None,
         image=None,
         docker_command='docker',
+        docker_add_args=None,
     ):
         self.project_id = project_id
         self.directory = directory
@@ -59,6 +61,7 @@ class LocalExecutor:
         self.image = (image or self.step.image)
         self.output_root = output_root
         self.docker_command = docker_command
+        self.docker_add_args = docker_add_args
         self.execution_id = '{}-{}'.format(time.strftime('%Y%m%d-%H%M%S'), get_random_string(5))
         self.repository_dir = tempfile.mkdtemp(prefix='valohai-code-' + self.execution_id)
         self.output_dir = os.path.join(output_root, self.execution_id)
@@ -67,14 +70,18 @@ class LocalExecutor:
     def prepare(self, verbose):
         input_volumes = list(prepare_inputs(self.inputs, verbose=verbose))
         self.clone_repo()
-        self.write_metadata_file()
-        return self.build_docker_command(input_volumes)
+        docker_command = self.build_docker_command(input_volumes)
+        self.write_metadata_file(docker_command)
+        return docker_command
 
     def execute(self, verbose=False):
         command = self.prepare(verbose=verbose)
         if verbose:
             self.print_report()
-        subprocess.call(command)
+        ret = subprocess.call(command)
+        if verbose:
+            secho('=== Execution finished with code {} ==='.format(ret), bold=True, fg=('red' if ret else 'green'))
+        return ret
 
     def print_report(self):
         echo('-> Using commit {}, step "{}"'.format(
@@ -86,11 +93,11 @@ class LocalExecutor:
         echo('=> Outputs will be written to {}'.format(style(self.output_dir, bold=True)))
         secho('=== Starting execution! ===', bold=True, fg='green')
 
-    def write_metadata_file(self):
+    def write_metadata_file(self, docker_command=None):
         with open(os.path.join(self.output_dir, 'valohai-execution-metadata.json'), 'w') as outf:
-            json.dump(self.get_metadata_blob(), outf, indent=2, sort_keys=True, ensure_ascii=True)
+            json.dump(self.get_metadata_blob(docker_command), outf, indent=2, sort_keys=True, ensure_ascii=True)
 
-    def get_metadata_blob(self):
+    def get_metadata_blob(self, docker_command=None):
         return {
             'command': self.command,
             'commit': self.commit,
@@ -101,6 +108,7 @@ class LocalExecutor:
             'project': self.project_id,
             'step': self.step.name,
             'time': datetime.datetime.now().isoformat(),
+            'docker_command': docker_command,
         }
 
     def clone_repo(self):
@@ -134,6 +142,8 @@ class LocalExecutor:
             '-it',
             '--name', 'valohai-local-%s' % self.execution_id,
         ]
+        if self.docker_add_args:
+            docker_command.extend(self.docker_add_args.split())
         env_vars = {
             'PYTHONUNBUFFERED': '1',
             'VH_REPOSITORY_DIR': volume_mount_targets['repository'],

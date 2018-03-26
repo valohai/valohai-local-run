@@ -4,6 +4,7 @@ from collections import defaultdict
 from io import StringIO
 from subprocess import check_output
 
+import sys
 import valohai_yaml
 from click import style
 
@@ -24,6 +25,8 @@ def get_argument_parser():
     ap.add_argument('--watch', '-w', action='store_true', help='Ignored. Local runs are always watched.')
     ap.add_argument('--project-id', '-p', default=None, help='Project ID.')
     ap.add_argument('--output-root', default=DEFAULT_OUTPUT_ROOT, help='Output root')
+    ap.add_argument('--docker-command', default='docker', help='Docker executable')
+    ap.add_argument('--docker-add-args', help='Additional arguments to Docker run')
     return ap
 
 parameter_type_map = {
@@ -118,5 +121,8 @@ def cli(argv=None):
         parameters=dicts['parameters'],
         project_id=args.project_id,
         step=step,
+        docker_command=args.docker_command,
+        docker_add_args=args.docker_add_args,
     )
-    executor.execute(verbose=True)
+    ret = executor.execute(verbose=True)
+    sys.exit(ret)  # Exit with the container's exit code
