@@ -19,6 +19,7 @@ def get_argument_parser():
                     help='The commit to use. Defaults to the current HEAD.')
     ap.add_argument('--environment', '-e', default=None, help='Ignored.')
     ap.add_argument('--image', default=None, help='Override the Docker image specified in the step')
+    ap.add_argument('--command', default=None, help='Override the command(s) specified in the step', nargs='*')
     ap.add_argument('--adhoc', '-a', action='store_true', help='Run as an ad-hoc execution')
     ap.add_argument('--watch', '-w', action='store_true', help='Ignored. Local runs are always watched.')
     ap.add_argument('--project-id', '-p', default=None, help='Project ID.')
@@ -108,6 +109,7 @@ def cli(argv=None):
             dicts[dict_name][name] = value
 
     executor = LocalExecutor(
+        command=args.command,
         commit=args.commit,
         directory=directory,
         image=args.image,

@@ -8,6 +8,7 @@ from itertools import chain
 
 from click import echo, secho, style
 
+from valohai_local_run.compat import text_type
 from .consts import volume_mount_targets
 from .inputs import prepare_inputs
 from .utils import ensure_makedirs, get_random_string
@@ -81,7 +82,7 @@ class LocalExecutor:
             style(self.step.name, bold=True),
         ))
         echo('-> Using image {}'.format(style(self.image, bold=True)))
-        echo('-> Using command {}'.format(style(self.command, bold=True)))
+        echo('-> Using command {}'.format(style(text_type(self.command), bold=True)))
         echo('=> Outputs will be written to {}'.format(style(self.output_dir, bold=True)))
         secho('=== Starting execution! ===', bold=True, fg='green')
 
