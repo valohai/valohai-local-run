@@ -6,10 +6,12 @@ import tempfile
 import time
 from itertools import chain
 
+import sys
 from click import echo, secho, style
 from valohai_yaml.utils import listify
 
 from valohai_local_run.compat import text_type
+from valohai_local_run.tee import tee_spawn
 from .consts import volume_mount_targets
 from .inputs import prepare_inputs
 from .utils import ensure_makedirs, get_random_string
@@ -74,11 +76,22 @@ class LocalExecutor:
         self.write_metadata_file(docker_command)
         return docker_command
 
-    def execute(self, verbose=False):
+    def execute(self, verbose=False, save_logs=True):
         command = self.prepare(verbose=verbose)
         if verbose:
             self.print_report()
-        ret = subprocess.call(command)
+        if save_logs:
+            stdout_path = os.path.join(self.output_dir, 'valohai-stdout.log')
+            stderr_path = os.path.join(self.output_dir, 'valohai-stderr.log')
+            with open(stdout_path, 'wb') as stdout_file, open(stderr_path, 'wb') as stderr_file:
+                proc = tee_spawn(
+                    command,
+                    stdout_fds=(sys.stdout, stdout_file),
+                    stderr_fds=(sys.stderr, stderr_file),
+                )
+            ret = proc.returncode
+        else:
+            ret = subprocess.call(command)
         if verbose:
             secho('=== Execution finished with code {} ==='.format(ret), bold=True, fg=('red' if ret else 'green'))
         return ret
@@ -139,7 +152,9 @@ class LocalExecutor:
             'run',
             '--entrypoint=',
             '--workdir=%s' % volume_mount_targets['repository'],
-            '-it',
+            '-a', 'stdout',
+            '-a', 'stderr',
+            '-i',
             '--name', 'valohai-local-%s' % self.execution_id,
         ]
         if self.docker_add_args:

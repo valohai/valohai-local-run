@@ -27,6 +27,7 @@ def get_argument_parser():
     ap.add_argument('--output-root', default=DEFAULT_OUTPUT_ROOT, help='Output root')
     ap.add_argument('--docker-command', default='docker', help='Docker executable')
     ap.add_argument('--docker-add-args', help='Additional arguments to Docker run')
+    ap.add_argument('--no-save-logs', action='store_false', default=True, dest='save_logs', help='Skip saving logs?')
     return ap
 
 parameter_type_map = {
@@ -124,5 +125,5 @@ def cli(argv=None):
         docker_command=args.docker_command,
         docker_add_args=args.docker_add_args,
     )
-    ret = executor.execute(verbose=True)
+    ret = executor.execute(verbose=True, save_logs=args.save_logs)
     sys.exit(ret)  # Exit with the container's exit code
