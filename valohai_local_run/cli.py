@@ -24,6 +24,7 @@ def get_argument_parser():
     ap.add_argument('--adhoc', '-a', action='store_true', help='Run as an ad-hoc execution')
     ap.add_argument('--watch', '-w', action='store_true', help='Ignored. Local runs are always watched.')
     ap.add_argument('--project-id', '-p', default=None, help='Project ID.')
+    ap.add_argument('--directory', '-d', help='Project directory (defaults to current working directory)')
     ap.add_argument('--output-root', default=DEFAULT_OUTPUT_ROOT, help='Output root')
     ap.add_argument('--docker-command', default='docker', help='Docker executable')
     ap.add_argument('--docker-add-args', help='Additional arguments to Docker run')
@@ -79,9 +80,11 @@ def resolve_commit_and_config(directory, has_git, commit):
 
 
 def cli(argv=None):
-    directory = os.getcwd()
     ap = get_argument_parser()
     args, rest_argv = ap.parse_known_args(argv)
+    directory = (args.directory or os.getcwd())
+    if not os.path.isdir(directory):
+        ap.error('Invalid --directory')
 
     has_git = (args.use_git and not args.adhoc and os.path.isdir(os.path.join(directory, '.git')))
 

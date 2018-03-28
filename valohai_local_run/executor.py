@@ -9,6 +9,7 @@ from itertools import chain
 
 from click import echo, secho, style
 
+from .consts import EXECUTION_METADATA_JSON_NAME, STDERR_LOG_NAME, STDOUT_LOG_NAME
 from .compat import text_type
 from .consts import volume_mount_targets
 from .inputs import prepare_inputs
@@ -86,8 +87,8 @@ class LocalExecutor:
         if verbose:
             self.print_report()
         if save_logs:
-            stdout_path = os.path.join(self.output_dir, 'valohai-stdout.log')
-            stderr_path = os.path.join(self.output_dir, 'valohai-stderr.log')
+            stdout_path = os.path.join(self.output_dir, STDOUT_LOG_NAME)
+            stderr_path = os.path.join(self.output_dir, STDERR_LOG_NAME)
             with open(stdout_path, 'wb') as stdout_file, open(stderr_path, 'wb') as stderr_file:
                 proc = tee_spawn(
                     command,
@@ -112,7 +113,7 @@ class LocalExecutor:
         secho('=== Starting execution! ===', bold=True, fg='green')
 
     def write_metadata_file(self, docker_command=None):
-        with open(os.path.join(self.output_dir, 'valohai-execution-metadata.json'), 'w') as outf:
+        with open(os.path.join(self.output_dir, EXECUTION_METADATA_JSON_NAME), 'w') as outf:
             json.dump(self.get_metadata_blob(docker_command), outf, indent=2, sort_keys=True, ensure_ascii=True)
 
     def get_metadata_blob(self, docker_command=None):
