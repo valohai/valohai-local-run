@@ -46,7 +46,8 @@ def _prepare_single_input(input_name, filename, multiple_specs):
             'destination': posixpath.join(
                 volume_mount_targets['inputs'],
                 input_name,
-            )
+            ),
+            'readonly': True,
         }
 
     if S_ISREG(fstat.st_mode):  # Bind single file
@@ -56,7 +57,8 @@ def _prepare_single_input(input_name, filename, multiple_specs):
                 volume_mount_targets['inputs'],
                 input_name,
                 dest_filename,
-            )
+            ),
+            'readonly': True,
         }
 
     raise ValueError(
