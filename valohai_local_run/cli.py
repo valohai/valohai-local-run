@@ -1,23 +1,23 @@
 import argparse
 import os
+import sys
 from collections import defaultdict
 from io import StringIO
 from subprocess import check_output
 
-import sys
 import valohai_yaml
-from click import style
 
 from .consts import DEFAULT_OUTPUT_ROOT
+from .excs import BadUsage
 from .executor import LocalExecutor
-from .utils import match_prefix
+from .utils import match_step
 
 
 def get_argument_parser():
     ap = argparse.ArgumentParser(add_help=False)
     ap.add_argument('step')
     ap.add_argument('--commit', '-c', default=None, metavar='SHA',
-                    help='The commit to use. Defaults to the current HEAD.')
+        help='The commit to use. Defaults to the current HEAD.')
     ap.add_argument('--environment', '-e', default=None, help='Ignored.')
     ap.add_argument('--image', default=None, help='Override the Docker image specified in the step')
     ap.add_argument('--command', default=None, help='Override the command(s) specified in the step', nargs='*')
@@ -28,12 +28,15 @@ def get_argument_parser():
     ap.add_argument('--docker-command', default='docker', help='Docker executable')
     ap.add_argument('--docker-add-args', help='Additional arguments to Docker run')
     ap.add_argument('--no-save-logs', action='store_false', default=True, dest='save_logs', help='Skip saving logs?')
+    ap.add_argument('--no-git', action='store_false', default=True, dest='use_git', help='Use Git?')
     return ap
+
 
 parameter_type_map = {
     'integer': int,
     'float': float,
 }
+
 
 def add_step_arguments(ap, step):
     param_group = ap.add_argument_group('parameters for "{}"'.format(step.name))
@@ -59,24 +62,20 @@ def add_step_arguments(ap, step):
         )
 
 
-def match_step(config, step):
-    if step in config.steps:
-        return step
-    step_matches = match_prefix(config.steps, step)
-    if not step_matches:
-        raise ValueError(
-            '"{step}" is not a known step (try one of {steps})'.format(
-                step=step,
-                steps=', '.join(style(t, bold=True) for t in sorted(config.steps))
-            ))
-    if len(step_matches) > 1:
-        raise ValueError(
-            '"{step}" is ambiguous.\nIt matches {matches}.\nKnown steps are {steps}.'.format(
-                step=step,
-                matches=', '.join(style(t, bold=True) for t in sorted(step_matches)),
-                steps=', '.join(style(t, bold=True) for t in sorted(config.steps)),
-            ))
-    return step_matches[0]
+def resolve_commit_and_config(directory, has_git, commit):
+    if has_git:
+        if not commit:
+            commit = check_output(['git', 'rev-parse', 'HEAD'], cwd=directory).strip().decode()
+        else:
+            commit = check_output(['git', 'rev-parse', '--verify', commit], cwd=directory).decode().strip()
+        config_data = check_output(['git', 'show', '{}:valohai.yaml'.format(commit)], cwd=directory).decode()
+    else:
+        if commit:
+            raise BadUsage('Can\'t use --commit when in Gitless mode')
+        with open(os.path.join(directory, 'valohai.yaml'), 'rb') as infp:
+            config_data = infp.read().decode('utf-8')
+        commit = '(gitless)'
+    return (commit, config_data)
 
 
 def cli(argv=None):
@@ -84,21 +83,16 @@ def cli(argv=None):
     ap = get_argument_parser()
     args, rest_argv = ap.parse_known_args(argv)
 
-    if args.adhoc:
-        raise NotImplementedError('Local executions with ad-hoc commits are not supported yet.')
-
-    if not args.commit:
-        args.commit = check_output(['git', 'rev-parse', 'HEAD'], cwd=directory).strip().decode()
-    else:
-        args.commit = check_output(['git', 'rev-parse', '--verify', args.commit], cwd=directory).decode().strip()
-
-    config_data = check_output(['git', 'show', '{}:valohai.yaml'.format(args.commit)], cwd=directory).decode()
-    config = valohai_yaml.parse(StringIO(config_data))
+    has_git = (args.use_git and not args.adhoc and os.path.isdir(os.path.join(directory, '.git')))
 
     try:
+        if args.adhoc and args.commit:
+            raise BadUsage('--adhoc and --commit are mutually exclusive')
+        args.commit, config_data = resolve_commit_and_config(directory, has_git, args.commit)
+        config = valohai_yaml.parse(StringIO(config_data))
         step = config.steps[match_step(config, args.step)]
-    except ValueError as ve:
-        ap.error(ve)
+    except BadUsage as be:
+        ap.error(be)
         return
 
     add_step_arguments(ap, step)
@@ -124,6 +118,7 @@ def cli(argv=None):
         step=step,
         docker_command=args.docker_command,
         docker_add_args=args.docker_add_args,
+        gitless=(not has_git),
     )
     ret = executor.execute(verbose=True, save_logs=args.save_logs)
     sys.exit(ret)  # Exit with the container's exit code

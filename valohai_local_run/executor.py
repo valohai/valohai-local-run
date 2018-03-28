@@ -2,18 +2,17 @@ import datetime
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import time
 from itertools import chain
 
-import sys
 from click import echo, secho, style
-from valohai_yaml.utils import listify
 
-from valohai_local_run.compat import text_type
-from valohai_local_run.tee import tee_spawn
+from .compat import text_type
 from .consts import volume_mount_targets
 from .inputs import prepare_inputs
+from .tee import tee_spawn
 from .utils import ensure_makedirs, get_random_string
 
 
@@ -49,6 +48,7 @@ class LocalExecutor:
         image=None,
         docker_command='docker',
         docker_add_args=None,
+        gitless=False,
     ):
         self.project_id = project_id
         self.directory = directory
@@ -65,13 +65,18 @@ class LocalExecutor:
         self.docker_command = docker_command
         self.docker_add_args = docker_add_args
         self.execution_id = '{}-{}'.format(time.strftime('%Y%m%d-%H%M%S'), get_random_string(5))
-        self.repository_dir = tempfile.mkdtemp(prefix='valohai-code-' + self.execution_id)
+        self.gitless = gitless
+        if self.gitless:
+            self.repository_dir = self.directory
+        else:
+            self.repository_dir = tempfile.mkdtemp(prefix='valohai-code-' + self.execution_id)
         self.output_dir = os.path.join(output_root, self.execution_id)
         ensure_makedirs(self.output_dir, 0o770)
 
     def prepare(self, verbose):
         input_volumes = list(prepare_inputs(self.inputs, verbose=verbose))
-        self.clone_repo()
+        if not self.gitless:
+            self.clone_repo()
         docker_command = self.build_docker_command(input_volumes)
         self.write_metadata_file(docker_command)
         return docker_command
@@ -125,6 +130,7 @@ class LocalExecutor:
         }
 
     def clone_repo(self):
+        assert not self.gitless, 'clone_repo() must not be called in  gitless mode'
         # Clone the desired commit into a temporary directory.
         source_git_dir = self.directory
         assert os.path.isdir(source_git_dir)
