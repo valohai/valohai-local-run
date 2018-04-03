@@ -1,0 +1,16 @@
+machine:
+  services:
+    - docker
+  python:
+    version: 3.5.2
+  environment:
+    PIP_EXISTS_ACTION: w
+dependencies:
+  pre:
+    - pip install -U pip setuptools wheel coverage codecov
+    - pip install -r requirements-dev.txt
+test:
+  override:
+    - "py.test --cov . -ra --junitxml=$CIRCLE_TEST_REPORTS/junit.xml"
+  post:
+    - codecov
