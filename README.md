@@ -85,9 +85,21 @@ directory.
 When a path is a directory, that directory is assumed to be the entirety of that input,
 i.e. the directory is mounted as `/valohai/inputs/input-name`.  All inputs are mounted read-only.
 
+Running with GPU support
+------------------------
 
+There is tentative support for running on local GPU devices.
+This relies on the [`nvidia-docker`][nd] package; please follow its installation
+instructions first.
+
+Once `nvidia-docker` is installed, you can direct `valohai-local-run` to use it with
+either the `--docker-command` or `--docker-add-args` arguments, as follows:
+
+* If you are using `nvidia-docker` 1.x, add `--docker-command=nvidia-docker`.
+* If you are using `nvidia-docker` 2.x, add `--docker-add-args=--runtime=nvidia`.
 
 [valohai]: https://valohai.com/?utm_source=valohai-local-run-readme
 [pypi]: https://pypi.org/project/valohai-local-run/
 [cli]: https://github.com/valohai/valohai-cli/
 [tfe]: https://github.com/valohai/tensorflow-example/
+[nd]: https://github.com/NVIDIA/nvidia-docker
