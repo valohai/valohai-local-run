@@ -6,9 +6,10 @@ machine:
   environment:
     PIP_EXISTS_ACTION: w
 dependencies:
-  pre:
+  override:
     - pip install -U pip setuptools wheel coverage codecov
     - pip install -r requirements-dev.txt
+    - pip install -e .
 test:
   override:
     - "py.test --cov . -ra --junitxml=$CIRCLE_TEST_REPORTS/junit.xml"

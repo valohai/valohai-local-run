@@ -35,7 +35,7 @@ def test_valohai_local_run(tmpdir, capsys):
             '--directory', str(code_dir),
             '--foo=%s/foo-input.txt' % str(inputs_dir),
             '--output-root=%s' % str(outputs_dir),
-            '--docker-add-args=-etoto=africa',
+            '--docker-add-args=--env toto=africa',
             '--floaty=17.3',
             'magic',
         ])
@@ -50,7 +50,7 @@ def test_valohai_local_run(tmpdir, capsys):
     assert output_dir_basename in out
 
     # Find our output files...
-    output_dir = os.path.join(outputs_dir, output_dir_basename)
+    output_dir = os.path.join(str(outputs_dir), output_dir_basename)
     assert os.path.isdir(output_dir)
 
     # Check outputs get saved correctly
