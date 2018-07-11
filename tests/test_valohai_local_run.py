@@ -1,14 +1,17 @@
 import json
 import os
+import random
 
 import pytest
 from more_itertools import first
 
 from valohai_local_run.cli import cli
-from valohai_local_run.consts import EXECUTION_METADATA_JSON_NAME, STDOUT_LOG_NAME
+from valohai_local_run.consts import EXECUTION_METADATA_JSON_NAME, STDOUT_LOG_NAME, STDERR_LOG_NAME
 
 
 def test_valohai_local_run(tmpdir, capsys):
+    stdout_cookie = '%016x' % random.randint(0, 1 << 24)
+    stderr_cookie = '%016x' % random.randint(0, 1 << 24)
     code_dir = tmpdir.mkdir('code')
     inputs_dir = tmpdir.mkdir('inputs')
     outputs_dir = tmpdir.mkdir('outputs')
@@ -16,7 +19,11 @@ def test_valohai_local_run(tmpdir, capsys):
 - step:
     name: magical super step
     image: busybox
-    command: "ls -laR $VH_INPUTS_DIR; printenv > $VH_OUTPUTS_DIR/proof.txt"
+    command:
+      - ls -laR $VH_INPUTS_DIR
+      - printenv > $VH_OUTPUTS_DIR/proof.txt
+      - echo {stderr_cookie} >&2
+      - echo {stdout_cookie}
     inputs:
       - name: foo
     parameters:
@@ -26,7 +33,10 @@ def test_valohai_local_run(tmpdir, capsys):
       - name: floaty
         type: float
         default: 8.2
-''')
+'''.format(
+        stderr_cookie=stderr_cookie,
+        stdout_cookie=stdout_cookie,
+    ))
 
     inputs_dir.join('foo-input.txt').write('hello hello hello')
 
@@ -65,6 +75,12 @@ def test_valohai_local_run(tmpdir, capsys):
             'inty': -7,
         }
 
-    # Check stdout gets saved correctly
-    with open(os.path.join(output_dir, STDOUT_LOG_NAME)) as out_fp:
-        assert 'foo-input.txt' in out_fp.read()
+    # Check stdout and stderr gets saved and teed
+
+    out_data = open(os.path.join(output_dir, STDOUT_LOG_NAME)).read()
+    err_data = open(os.path.join(output_dir, STDERR_LOG_NAME)).read()
+    for s in (out_data, out):
+        assert 'foo-input.txt' in s
+        assert stdout_cookie in s
+    for s in (err_data, err):
+        assert stderr_cookie in s
