@@ -89,11 +89,13 @@ class LocalExecutor:
         if save_logs:
             stdout_path = os.path.join(self.output_dir, STDOUT_LOG_NAME)
             stderr_path = os.path.join(self.output_dir, STDERR_LOG_NAME)
+            binary_stdout = getattr(sys.stdout, 'buffer', sys.stdout)
+            binary_stderr = getattr(sys.stderr, 'buffer', sys.stderr)
             with open(stdout_path, 'wb') as stdout_file, open(stderr_path, 'wb') as stderr_file:
                 proc = tee_spawn(
                     command,
-                    stdout_fds=(sys.stdout, stdout_file),
-                    stderr_fds=(sys.stderr, stderr_file),
+                    stdout_files=(binary_stdout, stdout_file),
+                    stderr_files=(binary_stderr, stderr_file),
                 )
             ret = proc.returncode
         else:
