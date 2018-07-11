@@ -2,27 +2,27 @@ import subprocess
 from select import select
 
 
-def tee_spawn(command, stdout_fds, stderr_fds):
+def tee_spawn(command, stdout_files, stderr_files):
     """
     Spawn `command` as a subprocess and tee its stdout and/or stderr
     to the given files.
 
     :param command: Command to spawn (see `subprocess.Popen`)
-    :param stdout_fds: Iterable of writable fds for stdout
-    :param stderr_fds: Iterable of writable fds for stderr
+    :param stdout_files: Iterable of writable files for stdout
+    :param stderr_files: Iterable of writable files for stderr
     :return: The process object after it has quit.
     """
     proc = subprocess.Popen(
         command,
         bufsize=0,
-        stdout=(subprocess.PIPE if stdout_fds else None),
-        stderr=(subprocess.PIPE if stderr_fds else None),
+        stdout=(subprocess.PIPE if stdout_files else None),
+        stderr=(subprocess.PIPE if stderr_files else None),
     )
     fd_map = {}
-    if stdout_fds:
-        fd_map[proc.stdout] = list(stdout_fds)
-    if stderr_fds:
-        fd_map[proc.stderr] = list(stderr_fds)
+    if stdout_files:
+        fd_map[proc.stdout] = list(stdout_files)
+    if stderr_files:
+        fd_map[proc.stderr] = list(stderr_files)
 
     while proc.poll() is None:
         try:
@@ -31,10 +31,10 @@ def tee_spawn(command, stdout_fds, stderr_fds):
                 data = from_fd.read(10240)
                 if not data:  # EOF? Weird!
                     continue
-                for to_fd in fd_map.get(from_fd, ()):
+                for to_file in fd_map.get(from_fd, ()):
                     try:
-                        to_fd.write(data)
-                    except:
+                        to_file.write(data)
+                    except:  # pragma: no cover
                         pass
         except:
             proc.kill()

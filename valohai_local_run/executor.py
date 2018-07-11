@@ -92,8 +92,8 @@ class LocalExecutor:
             with open(stdout_path, 'wb') as stdout_file, open(stderr_path, 'wb') as stderr_file:
                 proc = tee_spawn(
                     command,
-                    stdout_fds=(sys.stdout, stdout_file),
-                    stderr_fds=(sys.stderr, stderr_file),
+                    stdout_files=(sys.stdout, stdout_file),
+                    stderr_files=(sys.stderr, stderr_file),
                 )
             ret = proc.returncode
         else:
