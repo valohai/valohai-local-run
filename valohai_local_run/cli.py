@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 import sys
 from collections import defaultdict
 from io import StringIO
@@ -39,11 +40,15 @@ parameter_type_map = {
 }
 
 
+def sanitize_name(name):
+    return re.sub(r'[_ ]', '-', name).lower()
+
+
 def add_step_arguments(ap, step):
     param_group = ap.add_argument_group('parameters for "{}"'.format(step.name))
     for parameter in step.parameters.values():
         param_group.add_argument(
-            '--%s' % parameter.name.replace('_', '-'),
+            '--%s' % sanitize_name(parameter.name),
             dest=':parameters:%s' % parameter.name,
             required=(parameter.default is None and not parameter.optional),
             default=parameter.default,
@@ -54,7 +59,7 @@ def add_step_arguments(ap, step):
     input_group = ap.add_argument_group('inputs for "{}"'.format(step.name))
     for input in step.inputs.values():
         input_group.add_argument(
-            '--%s' % input.name.replace('_', '-'),
+            '--%s' % sanitize_name(input.name),
             dest=':inputs:%s' % input.name,
             required=(input.default is None and not input.optional),
             default=input.default,
