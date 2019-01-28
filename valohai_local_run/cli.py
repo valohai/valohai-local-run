@@ -65,6 +65,7 @@ def add_step_arguments(ap, step):
             default=input.default,
             metavar='URL',
             help='Input "%s"' % input.name,
+            nargs='*',
         )
 
 
